@@ -14,10 +14,17 @@ interface ExtractedData {
 
 type PlanField = keyof Omit<MonthlyPlan, 'id' | 'storeId' | 'store' | 'month' | 'createdAt' | 'updatedAt'>;
 
+interface BestMatch {
+  field: string;
+  similarity: number;
+}
+
 interface DataConfirmationModalProps {
-  data: ExtractedData[];
-  onConfirm: (mappedData: Partial<MonthlyPlan>) => void;
+  isOpen: boolean;
   onClose: () => void;
+  onConfirm: (mappings: Record<string, string>) => void;
+  recognizedData: string[];
+  availableFields: string[];
 }
 
 const PLAN_FIELDS: { key: PlanField; label: string }[] = [
@@ -41,40 +48,37 @@ const PLAN_FIELDS: { key: PlanField; label: string }[] = [
 ];
 
 export default function DataConfirmationModal({
-  data,
+  isOpen,
+  onClose,
   onConfirm,
-  onClose
+  recognizedData,
+  availableFields,
 }: DataConfirmationModalProps) {
-  const [mappings, setMappings] = useState<Record<string, PlanField>>({});
-  const [suggestedMappings, setSuggestedMappings] = useState<Record<string, PlanField>>({});
+  const [mappings, setMappings] = useState<Record<string, string>>({});
+  const [suggestedMappings, setSuggestedMappings] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    // Автоматическое сопоставление на основе схожести текста
-    const newSuggestedMappings: Record<string, PlanField> = {};
-    
-    data.forEach(({ text }) => {
-      const normalizedText = text.toLowerCase().trim();
+    if (isOpen) {
+      const newSuggestedMappings: Record<string, string> = {};
       
-      // Находим наиболее похожее поле
-      let bestMatch: { field: PlanField; similarity: number } | null = null;
-      
-      PLAN_FIELDS.forEach(({ key, label }) => {
-        const normalizedLabel = label.toLowerCase();
-        const similarity = calculateSimilarity(normalizedText, normalizedLabel);
-        
-        if (!bestMatch || similarity > bestMatch.similarity) {
-          bestMatch = { field: key, similarity: similarity };
+      recognizedData.forEach((text) => {
+        const bestMatch = availableFields.reduce<BestMatch | null>((best, field) => {
+          const similarity = calculateSimilarity(text.toLowerCase(), field.toLowerCase());
+          if (!best || similarity > best.similarity) {
+            return { field, similarity };
+          }
+          return best;
+        }, null);
+
+        if (bestMatch && bestMatch.similarity > 0.5) {
+          newSuggestedMappings[text] = bestMatch.field;
         }
       });
-      
-      if (bestMatch && bestMatch.similarity > 0.5) {
-        newSuggestedMappings[text] = bestMatch.field;
-      }
-    });
-    
-    setSuggestedMappings(newSuggestedMappings);
-    setMappings(newSuggestedMappings);
-  }, [data]);
+
+      setSuggestedMappings(newSuggestedMappings);
+      setMappings(newSuggestedMappings);
+    }
+  }, [isOpen, recognizedData, availableFields]);
 
   const calculateSimilarity = (str1: string, str2: string): number => {
     const len1 = str1.length;
@@ -100,19 +104,20 @@ export default function DataConfirmationModal({
   };
 
   const handleConfirm = () => {
-    const result: Partial<MonthlyPlan> = {};
+    const result: Record<string, string> = {};
     
-    data.forEach(({ text }) => {
+    recognizedData.forEach((text) => {
       const field = mappings[text];
       if (field) {
         const numericValue = parseFloat(text);
         if (!isNaN(numericValue)) {
-          result[field] = numericValue;
+          result[field] = numericValue.toString();
         }
       }
     });
-    
+
     onConfirm(result);
+    onClose();
   };
 
   return (
@@ -128,7 +133,7 @@ export default function DataConfirmationModal({
           </p>
           
           <div className="grid grid-cols-1 gap-4">
-            {data.map(({ text, confidence }, index) => {
+            {recognizedData.map((text, index) => {
               const isNumeric = !isNaN(parseFloat(text));
               
               return (
@@ -142,7 +147,7 @@ export default function DataConfirmationModal({
                     <div>
                       <span className="font-medium">{text}</span>
                       <span className="ml-2 text-sm text-gray-500">
-                        (уверенность: {Math.round(confidence)}%)
+                        (уверенность: {Math.round(parseFloat(text) * 100)}%)
                       </span>
                     </div>
                     
@@ -151,14 +156,14 @@ export default function DataConfirmationModal({
                         value={mappings[text] || ''}
                         onChange={(e) => setMappings({
                           ...mappings,
-                          [text]: e.target.value as PlanField
+                          [text]: e.target.value
                         })}
                         className="ml-4 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                       >
                         <option value="">Выберите поле</option>
-                        {PLAN_FIELDS.map(({ key, label }) => (
-                          <option key={key} value={key}>
-                            {label}
+                        {availableFields.map((field) => (
+                          <option key={field} value={field}>
+                            {field}
                           </option>
                         ))}
                       </select>
