@@ -4,28 +4,17 @@ import { useState } from 'react';
 import RevenueInput from '../components/RevenueInput';
 import SummaryStats from '../components/SummaryStats';
 import RevenueTable from '../components/RevenueTable';
-import { RevenueEntry, SummaryStats as SummaryStatsType } from '../types';
+
+interface Revenue {
+  amount: number;
+  date: string;
+}
 
 export default function Home() {
-  const [entries, setEntries] = useState<RevenueEntry[]>([]);
+  const [revenues, setRevenues] = useState<Revenue[]>([]);
 
-  const handleSubmit = (entry: RevenueEntry) => {
-    setEntries([...entries, entry]);
-  };
-
-  const calculateSummaryStats = (): SummaryStatsType => {
-    const totalPlanned = entries.reduce((sum, entry) => sum + entry.planned, 0);
-    const totalActual = entries.reduce((sum, entry) => sum + entry.actual, 0);
-    const averageAchievement = entries.reduce((sum, entry) => sum + entry.percentage, 0) / entries.length;
-    const daysInTarget = entries.filter(entry => entry.percentage >= 100).length;
-
-    return {
-      totalPlanned,
-      totalActual,
-      averageAchievement,
-      daysInTarget,
-      totalDays: entries.length
-    };
+  const handleAddRevenue = (amount: number, date: string) => {
+    setRevenues([...revenues, { amount, date }]);
   };
 
   return (
@@ -35,17 +24,11 @@ export default function Home() {
           Система учета выручки
         </h1>
         
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2">
-            <SummaryStats stats={calculateSummaryStats()} />
-            <div className="mt-8 bg-white rounded-lg shadow">
-              <RevenueTable entries={entries} />
-            </div>
-          </div>
-          
-          <div>
-            <RevenueInput onSubmit={handleSubmit} />
-          </div>
+        <SummaryStats revenues={revenues} />
+        
+        <div className="bg-white rounded-lg shadow p-6">
+          <RevenueInput onAddRevenue={handleAddRevenue} />
+          <RevenueTable revenues={revenues} />
         </div>
       </div>
     </main>
