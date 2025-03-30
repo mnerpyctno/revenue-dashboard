@@ -1,8 +1,10 @@
 export interface Store {
   id: string;
+  number: string;
+  address: string;
+  group: string;
+  staffCount: number;
   name: string; // ТО
-  group: string; // Гр
-  address?: string;
   region?: string;
 }
 

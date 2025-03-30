@@ -2,18 +2,21 @@
 
 import { useState } from 'react';
 import { Store } from '../types';
+import EditStoreModal from '../components/EditStoreModal';
 
 export default function Directory() {
   const [stores, setStores] = useState<Store[]>([]);
   const [editingStore, setEditingStore] = useState<Store | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const handleAddStore = (store: Store) => {
-    setStores([...stores, store]);
-  };
-
-  const handleEditStore = (store: Store) => {
-    setStores(stores.map(s => s.id === store.id ? store : s));
+  const handleSaveStore = (store: Store) => {
+    if (editingStore) {
+      setStores(stores.map(s => s.id === store.id ? store : s));
+    } else {
+      setStores([...stores, store]);
+    }
     setEditingStore(null);
+    setIsModalOpen(false);
   };
 
   return (
@@ -25,7 +28,10 @@ export default function Directory() {
           </h1>
           <button
             className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-            onClick={() => {/* Здесь будет добавление нового ТО */}}
+            onClick={() => {
+              setEditingStore(null);
+              setIsModalOpen(true);
+            }}
           >
             Добавить ТО
           </button>
@@ -36,13 +42,19 @@ export default function Directory() {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Номер
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Название
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Группа
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Торговый объект
+                  Адрес
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Адрес
+                  Персонал
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Регион
@@ -56,20 +68,29 @@ export default function Directory() {
               {stores.map((store) => (
                 <tr key={store.id}>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {store.group}
+                    {store.number}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {store.name}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {store.group}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {store.address}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {store.staffCount}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {store.region}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     <button
-                      onClick={() => setEditingStore(store)}
+                      onClick={() => {
+                        setEditingStore(store);
+                        setIsModalOpen(true);
+                      }}
                       className="text-indigo-600 hover:text-indigo-900"
                     >
                       Редактировать
@@ -81,6 +102,17 @@ export default function Directory() {
           </table>
         </div>
       </div>
+
+      {isModalOpen && (
+        <EditStoreModal
+          store={editingStore || undefined}
+          onSave={handleSaveStore}
+          onClose={() => {
+            setEditingStore(null);
+            setIsModalOpen(false);
+          }}
+        />
+      )}
     </main>
   );
 } 
