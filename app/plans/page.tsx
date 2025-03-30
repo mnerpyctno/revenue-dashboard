@@ -17,7 +17,28 @@ interface ExtractedData {
   };
 }
 
-type PlanFields = Omit<MonthlyPlan, 'id' | 'createdAt' | 'updatedAt'>;
+type PlanFields = {
+  storeId: string;
+  month: string;
+  gsm: number;
+  gadgets: number;
+  digital: number;
+  orders: number;
+  household: number;
+  tech: number;
+  photo: number;
+  sp: number;
+  service: number;
+  smart: number;
+  sim: number;
+  skill: number;
+  click: number;
+  vp: number;
+  nayavu: number;
+  spice: number;
+  auto: number;
+};
+
 type PlanFieldKey = keyof PlanFields;
 
 const PLAN_FIELDS: PlanFieldKey[] = [
@@ -119,7 +140,7 @@ export default function Plans() {
       if (!isNaN(numericValue)) {
         const key = field as PlanFieldKey;
         if (PLAN_FIELDS.includes(key)) {
-          (planData[key] as number) = numericValue;
+          planData[key] = numericValue;
         }
       }
     });
