@@ -1,9 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import RevenueInput from '../components/RevenueInput';
-import SummaryStats from '../components/SummaryStats';
-import RevenueTable from '../components/RevenueTable';
+import RevenueInput from './components/RevenueInput';
+import SummaryStats from './components/SummaryStats';
+import RevenueTable from './components/RevenueTable';
 
 interface Revenue {
   amount: number;
