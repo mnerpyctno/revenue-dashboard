@@ -1,50 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
+import { getStores, saveStore } from '@/lib/edge-config';
 
 export async function GET() {
   try {
-    const stores = await prisma.store.findMany({
-      orderBy: [
-        { group: 'asc' },
-        { name: 'asc' },
-      ],
-    });
-
+    const stores = await getStores();
     return NextResponse.json(stores);
   } catch (error) {
     console.error('Error fetching stores:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch stores' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to fetch stores' }, { status: 500 });
   }
 }
 
-export async function POST(request: NextRequest) {
+export async function POST(request: Request) {
   try {
-    const data = await request.json();
-
-    if (!data.name || !data.group) {
-      return NextResponse.json(
-        { error: 'Name and group are required' },
-        { status: 400 }
-      );
-    }
-
-    const store = await prisma.store.create({
-      data: {
-        name: data.name,
-        group: data.group,
-      },
-    });
-
-    return NextResponse.json(store);
+    const store = await request.json();
+    const savedStore = await saveStore(store);
+    return NextResponse.json(savedStore);
   } catch (error) {
-    console.error('Error creating store:', error);
-    return NextResponse.json(
-      { error: 'Failed to create store' },
-      { status: 500 }
-    );
+    console.error('Error saving store:', error);
+    return NextResponse.json({ error: 'Failed to save store' }, { status: 500 });
   }
 }
 
