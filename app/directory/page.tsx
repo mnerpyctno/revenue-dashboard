@@ -60,25 +60,33 @@ export default function Directory() {
     }
   };
 
-  const handleBulkSave = async (stores: Partial<Store>[]) => {
+  const handleSaveStores = async (stores: { group: string; name: string }[]) => {
     try {
-      const promises = stores.map(store => 
-        fetch('/api/stores', {
+      const newStores: Store[] = stores.map(store => ({
+        id: Date.now().toString(),
+        group: store.group,
+        name: store.name,
+        plans: []
+      }));
+
+      // Сохраняем все торговые объекты последовательно
+      for (const store of newStores) {
+        await fetch('/api/stores', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify(store),
-        })
-      );
+        });
+      }
 
-      await Promise.all(promises);
-      await fetchStores();
+      // Обновляем список торговых объектов
+      const response = await fetch('/api/stores');
+      const data = await response.json();
+      setStores(data);
       setIsUploadModalOpen(false);
-      setBulkStores([]);
     } catch (error) {
-      console.error('Error saving stores:', error);
-      alert('Ошибка при сохранении торговых объектов');
+      console.error('Ошибка при сохранении торговых объектов:', error);
     }
   };
 
@@ -205,26 +213,16 @@ export default function Directory() {
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-semibold">Массовое добавление торговых объектов</h2>
               <button
-                onClick={() => {
-                  setIsUploadModalOpen(false);
-                  setUploadError(null);
-                }}
-                className="text-gray-400 hover:text-gray-500"
+                onClick={() => setIsUploadModalOpen(false)}
+                className="text-gray-500 hover:text-gray-700"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
             </div>
-            {uploadError && (
-              <div className="mb-4 bg-red-50 border border-red-200 rounded-lg p-4">
-                <p className="text-red-600">{uploadError}</p>
-              </div>
-            )}
             <BulkStoreUploader
-              onDataRecognized={(data) => {
-                handleBulkSave(data);
-              }}
+              onDataRecognized={handleSaveStores}
             />
           </div>
         </div>

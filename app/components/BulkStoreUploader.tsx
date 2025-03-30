@@ -4,7 +4,7 @@ import { useState, useCallback } from 'react';
 import { Store } from '@/app/types';
 
 interface BulkStoreUploaderProps {
-  onDataRecognized: (data: Partial<Store>[]) => void;
+  onDataRecognized: (data: { group: string; name: string; }[]) => void;
 }
 
 interface ColumnMapping {
@@ -82,7 +82,7 @@ export default function BulkStoreUploader({ onDataRecognized }: BulkStoreUploade
       return;
     }
 
-    const stores: Partial<Store>[] = lines.slice(1).map(line => {
+    const stores: { group: string; name: string; }[] = lines.slice(1).map(line => {
       const values = line.split('\t');
       return {
         group: values[groupIndex]?.trim() || '',
