@@ -17,16 +17,40 @@ interface ExtractedData {
   };
 }
 
+type PlanFields = Omit<MonthlyPlan, 'id' | 'createdAt' | 'updatedAt'>;
+type PlanFieldKey = keyof PlanFields;
+
+const PLAN_FIELDS: PlanFieldKey[] = [
+  'gsm',
+  'gadgets',
+  'digital',
+  'orders',
+  'household',
+  'tech',
+  'photo',
+  'sp',
+  'service',
+  'smart',
+  'sim',
+  'skill',
+  'click',
+  'vp',
+  'nayavu',
+  'spice',
+  'auto'
+];
+
 export default function Plans() {
+  const [stores, setStores] = useState<Store[]>([]);
+  const [plans, setPlans] = useState<MonthlyPlan[]>([]);
   const [selectedMonth, setSelectedMonth] = useState<string>(
     new Date().toISOString().slice(0, 7)
   );
+  const [selectedStore, setSelectedStore] = useState<string>('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingPlan, setEditingPlan] = useState<MonthlyPlan | null>(null);
   const [isImageUploaderOpen, setIsImageUploaderOpen] = useState(false);
   const [extractedData, setExtractedData] = useState<ExtractedData[] | null>(null);
-  const [plans, setPlans] = useState<MonthlyPlan[]>([]);
-  const [stores, setStores] = useState<Store[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -36,22 +60,22 @@ export default function Plans() {
   const fetchData = async () => {
     try {
       setIsLoading(true);
-      const [plansRes, storesRes] = await Promise.all([
-        fetch(`/api/plans?month=${selectedMonth}`),
-        fetch('/api/stores')
+      const [storesResponse, plansResponse] = await Promise.all([
+        fetch('/api/stores'),
+        fetch(`/api/plans?month=${selectedMonth}`)
       ]);
 
-      if (!plansRes.ok || !storesRes.ok) {
+      if (!storesResponse.ok || !plansResponse.ok) {
         throw new Error('Failed to fetch data');
       }
 
-      const [plansData, storesData] = await Promise.all([
-        plansRes.json(),
-        storesRes.json()
+      const [storesData, plansData] = await Promise.all([
+        storesResponse.json(),
+        plansResponse.json()
       ]);
 
-      setPlans(plansData);
       setStores(storesData);
+      setPlans(plansData);
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
@@ -64,26 +88,70 @@ export default function Plans() {
     setIsImageUploaderOpen(false);
   };
 
-  const handleDataConfirmed = async (mappedData: Partial<MonthlyPlan>) => {
+  const handleDataConfirmed = async (mappings: Record<string, string>) => {
+    if (!selectedStore || !selectedMonth) return;
+
+    const planData: PlanFields = {
+      storeId: selectedStore,
+      month: selectedMonth,
+      gsm: 0,
+      gadgets: 0,
+      digital: 0,
+      orders: 0,
+      household: 0,
+      tech: 0,
+      photo: 0,
+      sp: 0,
+      service: 0,
+      smart: 0,
+      sim: 0,
+      skill: 0,
+      click: 0,
+      vp: 0,
+      nayavu: 0,
+      spice: 0,
+      auto: 0,
+    };
+
+    // Преобразуем строковые значения в числа
+    Object.entries(mappings).forEach(([text, field]) => {
+      const numericValue = parseFloat(text);
+      if (!isNaN(numericValue)) {
+        const key = field as PlanFieldKey;
+        if (PLAN_FIELDS.includes(key)) {
+          planData[key] = numericValue;
+        }
+      }
+    });
+
     try {
       const response = await fetch('/api/plans', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          ...mappedData,
-          month: selectedMonth,
-          // TODO: Add storeId selection
-          storeId: stores[0]?.id
-        }),
+        body: JSON.stringify(planData),
       });
 
       if (!response.ok) {
         throw new Error('Failed to save plan');
       }
 
-      await fetchData();
+      const savedPlan = await response.json();
+      if (!savedPlan) {
+        throw new Error('Invalid response from server');
+      }
+
+      setPlans(prevPlans => {
+        const existingIndex = prevPlans.findIndex(p => p.id === savedPlan.id);
+        if (existingIndex >= 0) {
+          const updatedPlans = [...prevPlans];
+          updatedPlans[existingIndex] = savedPlan;
+          return updatedPlans;
+        }
+        return [...prevPlans, savedPlan];
+      });
+
       setExtractedData(null);
     } catch (error) {
       console.error('Error saving plan:', error);
@@ -226,9 +294,29 @@ export default function Plans() {
 
       {extractedData && (
         <DataConfirmationModal
-          data={extractedData}
+          isOpen={true}
           onConfirm={handleDataConfirmed}
           onClose={() => setExtractedData(null)}
+          recognizedData={extractedData.map(item => item.text)}
+          availableFields={[
+            'gsm',
+            'gadgets',
+            'digital',
+            'orders',
+            'household',
+            'tech',
+            'photo',
+            'sp',
+            'service',
+            'smart',
+            'sim',
+            'skill',
+            'click',
+            'vp',
+            'nayavu',
+            'spice',
+            'auto'
+          ]}
         />
       )}
 
