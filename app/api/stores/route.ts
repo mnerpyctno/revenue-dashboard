@@ -33,17 +33,8 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    const store = await prisma.store.update({
-      where: {
-        id: data.id,
-      },
-      data: {
-        name: data.name,
-        group: data.group,
-      },
-    });
-
-    return NextResponse.json(store);
+    const savedStore = await saveStore(data);
+    return NextResponse.json(savedStore);
   } catch (error) {
     console.error('Error updating store:', error);
     return NextResponse.json(
@@ -65,11 +56,9 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    await prisma.store.delete({
-      where: {
-        id: id,
-      },
-    });
+    const stores = await getStores();
+    const updatedStores = stores.filter(store => store.id !== id);
+    await saveStore({ stores: updatedStores });
 
     return NextResponse.json({ success: true });
   } catch (error) {

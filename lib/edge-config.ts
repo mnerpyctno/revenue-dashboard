@@ -49,25 +49,30 @@ export async function savePlan(plan: Omit<MonthlyPlan, 'id'>): Promise<MonthlyPl
   }
 }
 
-export async function saveStore(store: Omit<Store, 'id'>): Promise<Store> {
+export async function saveStore(storeOrStores: Omit<Store, 'id'> | { stores: Store[] }): Promise<Store | void> {
   try {
+    if ('stores' in storeOrStores) {
+      await config.set('stores', storeOrStores.stores);
+      return;
+    }
+
     const stores = await getStores();
-    const existingIndex = stores.findIndex((s) => s.id === (store as Store).id);
+    const existingIndex = stores.findIndex((s) => s.id === (storeOrStores as Store).id);
 
     let updatedStores: Store[];
     if (existingIndex >= 0) {
       updatedStores = [...stores];
-      updatedStores[existingIndex] = store as Store;
+      updatedStores[existingIndex] = storeOrStores as Store;
     } else {
       const newStore: Store = {
-        ...store,
+        ...storeOrStores,
         id: crypto.randomUUID()
       };
       updatedStores = [...stores, newStore];
     }
 
     await config.set('stores', updatedStores);
-    return existingIndex >= 0 ? (store as Store) : updatedStores[updatedStores.length - 1];
+    return existingIndex >= 0 ? (storeOrStores as Store) : updatedStores[updatedStores.length - 1];
   } catch (error) {
     console.error('Error saving store:', error);
     throw error;
