@@ -1,0 +1,57 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Store {
+  id         String        @id @default(uuid())
+  number     String        @unique
+  name       String
+  address    String
+  group      String
+  staffCount Int
+  region     String?
+  plans      MonthlyPlan[]
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+}
+
+model MonthlyPlan {
+  id             String   @id @default(uuid())
+  storeId        String
+  store          Store    @relation(fields: [storeId], references: [id])
+  month          String // Format: YYYY-MM
+  // Base Plan
+  gsm            Float
+  gadgets        Float
+  digital        Float
+  orders         Float
+  household      Float
+  tech           Float
+  photo          Float
+  sp             Float
+  service        Float
+  smart          Float
+  sim            Float
+  // Additional Plan
+  skill          Float
+  click          Float
+  vp             Float
+  nayavu         Float
+  spice          Float
+  auto           Float
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([storeId, month])
+}

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Store } from '../types';
 import EditStoreModal from '../components/EditStoreModal';
 
@@ -8,16 +8,71 @@ export default function Directory() {
   const [stores, setStores] = useState<Store[]>([]);
   const [editingStore, setEditingStore] = useState<Store | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSaveStore = (store: Store) => {
-    if (editingStore) {
-      setStores(stores.map(s => s.id === store.id ? store : s));
-    } else {
-      setStores([...stores, store]);
+  useEffect(() => {
+    fetchStores();
+  }, []);
+
+  const fetchStores = async () => {
+    try {
+      const response = await fetch('/api/stores');
+      if (!response.ok) throw new Error('Failed to fetch stores');
+      const data = await response.json();
+      setStores(data);
+    } catch (err) {
+      setError('Ошибка при загрузке данных');
+      console.error('Error:', err);
+    } finally {
+      setIsLoading(false);
     }
-    setEditingStore(null);
-    setIsModalOpen(false);
   };
+
+  const handleSaveStore = async (store: Store) => {
+    try {
+      const url = editingStore
+        ? `/api/stores/${store.id}`
+        : '/api/stores';
+      
+      const response = await fetch(url, {
+        method: editingStore ? 'PUT' : 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(store),
+      });
+
+      if (!response.ok) throw new Error('Failed to save store');
+      
+      await fetchStores();
+      setEditingStore(null);
+      setIsModalOpen(false);
+    } catch (err) {
+      console.error('Error saving store:', err);
+      setError('Ошибка при сохранении данных');
+    }
+  };
+
+  const handleDeleteStore = async (id: string) => {
+    if (!confirm('Вы уверены, что хотите удалить этот ТО?')) return;
+
+    try {
+      const response = await fetch(`/api/stores/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) throw new Error('Failed to delete store');
+      
+      await fetchStores();
+    } catch (err) {
+      console.error('Error deleting store:', err);
+      setError('Ошибка при удалении ТО');
+    }
+  };
+
+  if (isLoading) return <div className="p-8 text-center">Загрузка...</div>;
+  if (error) return <div className="p-8 text-center text-red-600">{error}</div>;
 
   return (
     <main className="min-h-screen bg-gray-100">
@@ -85,7 +140,7 @@ export default function Directory() {
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {store.region}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm space-x-3">
                     <button
                       onClick={() => {
                         setEditingStore(store);
@@ -94,6 +149,12 @@ export default function Directory() {
                       className="text-indigo-600 hover:text-indigo-900"
                     >
                       Редактировать
+                    </button>
+                    <button
+                      onClick={() => handleDeleteStore(store.id)}
+                      className="text-red-600 hover:text-red-900"
+                    >
+                      Удалить
                     </button>
                   </td>
                 </tr>
