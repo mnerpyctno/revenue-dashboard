@@ -17,13 +17,10 @@ export default function EditPlanModal({ plan, onSave, onClose }: EditPlanModalPr
     onClose();
   };
 
-  const handleChange = (field: keyof typeof editedPlan.additionalPlan, value: string) => {
+  const handleChange = (field: keyof MonthlyPlan, value: string) => {
     setEditedPlan({
       ...editedPlan,
-      additionalPlan: {
-        ...editedPlan.additionalPlan,
-        [field]: Number(value)
-      }
+      [field]: Number(value)
     });
   };
 
@@ -39,7 +36,7 @@ export default function EditPlanModal({ plan, onSave, onClose }: EditPlanModalPr
             </label>
             <input
               type="number"
-              value={editedPlan.additionalPlan.skill}
+              value={editedPlan.skill}
               onChange={(e) => handleChange('skill', e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md"
             />
@@ -50,7 +47,7 @@ export default function EditPlanModal({ plan, onSave, onClose }: EditPlanModalPr
             </label>
             <input
               type="number"
-              value={editedPlan.additionalPlan.click}
+              value={editedPlan.click}
               onChange={(e) => handleChange('click', e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md"
             />
@@ -61,7 +58,7 @@ export default function EditPlanModal({ plan, onSave, onClose }: EditPlanModalPr
             </label>
             <input
               type="number"
-              value={editedPlan.additionalPlan.vp}
+              value={editedPlan.vp}
               onChange={(e) => handleChange('vp', e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md"
             />
@@ -72,7 +69,7 @@ export default function EditPlanModal({ plan, onSave, onClose }: EditPlanModalPr
             </label>
             <input
               type="number"
-              value={editedPlan.additionalPlan.nayavu}
+              value={editedPlan.nayavu}
               onChange={(e) => handleChange('nayavu', e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md"
             />
@@ -83,7 +80,7 @@ export default function EditPlanModal({ plan, onSave, onClose }: EditPlanModalPr
             </label>
             <input
               type="number"
-              value={editedPlan.additionalPlan.spice}
+              value={editedPlan.spice}
               onChange={(e) => handleChange('spice', e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md"
             />
@@ -94,7 +91,7 @@ export default function EditPlanModal({ plan, onSave, onClose }: EditPlanModalPr
             </label>
             <input
               type="number"
-              value={editedPlan.additionalPlan.auto}
+              value={editedPlan.auto}
               onChange={(e) => handleChange('auto', e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md"
             />
@@ -104,13 +101,13 @@ export default function EditPlanModal({ plan, onSave, onClose }: EditPlanModalPr
         <div className="flex justify-end gap-4">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50"
+            className="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
           >
             Отмена
           </button>
           <button
             onClick={handleSave}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            className="px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700"
           >
             Сохранить
           </button>
