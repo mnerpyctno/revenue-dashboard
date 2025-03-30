@@ -3,10 +3,12 @@
 import { useState, useEffect } from 'react';
 import { Store } from '@/app/types';
 import EditStoreModal from '../components/EditStoreModal';
+import StoreImageUploader from '../components/StoreImageUploader';
 
 export default function Directory() {
   const [stores, setStores] = useState<Store[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [editingStore, setEditingStore] = useState<Store | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -92,15 +94,26 @@ export default function Directory() {
           <h1 className="text-3xl font-bold text-gray-900">
             Справочник торговых объектов
           </h1>
-          <button
-            onClick={() => {
-              setEditingStore(null);
-              setIsModalOpen(true);
-            }}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-          >
-            Добавить ТО
-          </button>
+          <div className="flex space-x-4">
+            <button
+              onClick={() => setIsUploadModalOpen(true)}
+              className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 flex items-center"
+            >
+              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              Загрузить изображение
+            </button>
+            <button
+              onClick={() => {
+                setEditingStore(null);
+                setIsModalOpen(true);
+              }}
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            >
+              Добавить ТО
+            </button>
+          </div>
         </div>
 
         <div className="bg-white rounded-lg shadow overflow-hidden">
@@ -160,6 +173,31 @@ export default function Directory() {
             setEditingStore(null);
           }}
         />
+      )}
+
+      {isUploadModalOpen && (
+        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center">
+          <div className="bg-white rounded-lg p-6 max-w-2xl w-full">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold">Загрузка изображения</h2>
+              <button
+                onClick={() => setIsUploadModalOpen(false)}
+                className="text-gray-400 hover:text-gray-500"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <StoreImageUploader
+              onDataRecognized={(data) => {
+                setEditingStore(data as Store);
+                setIsUploadModalOpen(false);
+                setIsModalOpen(true);
+              }}
+            />
+          </div>
+        </div>
       )}
     </main>
   );
