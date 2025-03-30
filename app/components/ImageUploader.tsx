@@ -14,9 +14,10 @@ interface ExtractedData {
 
 interface ImageUploaderProps {
   onDataExtracted: (data: ExtractedData[]) => void;
+  className?: string;
 }
 
-export default function ImageUploader({ onDataExtracted }: ImageUploaderProps) {
+export default function ImageUploader({ onDataExtracted, className = '' }: ImageUploaderProps) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
 
@@ -61,7 +62,7 @@ export default function ImageUploader({ onDataExtracted }: ImageUploaderProps) {
   };
 
   return (
-    <div className="space-y-4">
+    <div className={`space-y-4 ${className}`}>
       <div className="flex items-center justify-center w-full">
         <label
           htmlFor="image-upload"
