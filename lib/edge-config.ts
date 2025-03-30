@@ -41,7 +41,9 @@ export async function savePlan(plan: Omit<MonthlyPlan, 'id'>): Promise<MonthlyPl
       updatedPlans = [...plans, newPlan];
     }
 
-    await config.set(`plans_${month}`, updatedPlans);
+    await config.update({
+      [`plans_${month}`]: updatedPlans
+    });
     return existingIndex >= 0 ? (plan as MonthlyPlan) : updatedPlans[updatedPlans.length - 1];
   } catch (error) {
     console.error('Error saving plan:', error);
@@ -52,7 +54,9 @@ export async function savePlan(plan: Omit<MonthlyPlan, 'id'>): Promise<MonthlyPl
 export async function saveStore(storeOrStores: Omit<Store, 'id'> | { stores: Store[] }): Promise<Store | void> {
   try {
     if ('stores' in storeOrStores) {
-      await config.set('stores', storeOrStores.stores);
+      await config.update({
+        stores: storeOrStores.stores
+      });
       return;
     }
 
@@ -71,7 +75,9 @@ export async function saveStore(storeOrStores: Omit<Store, 'id'> | { stores: Sto
       updatedStores = [...stores, newStore];
     }
 
-    await config.set('stores', updatedStores);
+    await config.update({
+      stores: updatedStores
+    });
     return existingIndex >= 0 ? (storeOrStores as Store) : updatedStores[updatedStores.length - 1];
   } catch (error) {
     console.error('Error saving store:', error);
