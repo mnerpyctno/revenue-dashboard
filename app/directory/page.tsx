@@ -1,15 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Store } from '../types';
+import { Store } from '@prisma/client';
 import EditStoreModal from '../components/EditStoreModal';
 
 export default function Directory() {
   const [stores, setStores] = useState<Store[]>([]);
-  const [editingStore, setEditingStore] = useState<Store | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingStore, setEditingStore] = useState<Store | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchStores();
@@ -17,62 +16,74 @@ export default function Directory() {
 
   const fetchStores = async () => {
     try {
+      setIsLoading(true);
       const response = await fetch('/api/stores');
-      if (!response.ok) throw new Error('Failed to fetch stores');
+      if (!response.ok) {
+        throw new Error('Failed to fetch stores');
+      }
       const data = await response.json();
       setStores(data);
-    } catch (err) {
-      setError('Ошибка при загрузке данных');
-      console.error('Error:', err);
+    } catch (error) {
+      console.error('Error fetching stores:', error);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleSaveStore = async (store: Store) => {
+  const handleSaveStore = async (store: Partial<Store>) => {
     try {
-      const url = editingStore
-        ? `/api/stores/${store.id}`
-        : '/api/stores';
-      
-      const response = await fetch(url, {
-        method: editingStore ? 'PUT' : 'POST',
+      const method = editingStore ? 'PUT' : 'POST';
+      const body = editingStore ? { ...store, id: editingStore.id } : store;
+
+      const response = await fetch('/api/stores', {
+        method,
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(store),
+        body: JSON.stringify(body),
       });
 
-      if (!response.ok) throw new Error('Failed to save store');
-      
+      if (!response.ok) {
+        throw new Error('Failed to save store');
+      }
+
       await fetchStores();
-      setEditingStore(null);
       setIsModalOpen(false);
-    } catch (err) {
-      console.error('Error saving store:', err);
-      setError('Ошибка при сохранении данных');
+      setEditingStore(null);
+    } catch (error) {
+      console.error('Error saving store:', error);
+      alert('Ошибка при сохранении ТО');
     }
   };
 
   const handleDeleteStore = async (id: string) => {
-    if (!confirm('Вы уверены, что хотите удалить этот ТО?')) return;
+    if (!confirm('Вы уверены, что хотите удалить этот ТО?')) {
+      return;
+    }
 
     try {
-      const response = await fetch(`/api/stores/${id}`, {
+      const response = await fetch(`/api/stores?id=${id}`, {
         method: 'DELETE',
       });
 
-      if (!response.ok) throw new Error('Failed to delete store');
-      
+      if (!response.ok) {
+        throw new Error('Failed to delete store');
+      }
+
       await fetchStores();
-    } catch (err) {
-      console.error('Error deleting store:', err);
-      setError('Ошибка при удалении ТО');
+    } catch (error) {
+      console.error('Error deleting store:', error);
+      alert('Ошибка при удалении ТО');
     }
   };
 
-  if (isLoading) return <div className="p-8 text-center">Загрузка...</div>;
-  if (error) return <div className="p-8 text-center text-red-600">{error}</div>;
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <div className="text-xl text-gray-600">Загрузка...</div>
+      </div>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-gray-100">
@@ -82,11 +93,11 @@ export default function Directory() {
             Справочник торговых объектов
           </h1>
           <button
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
             onClick={() => {
               setEditingStore(null);
               setIsModalOpen(true);
             }}
+            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
           >
             Добавить ТО
           </button>
@@ -97,24 +108,12 @@ export default function Directory() {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Номер
+                  Группа
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Название
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Группа
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Адрес
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Персонал
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Регион
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Действия
                 </th>
               </tr>
@@ -123,30 +122,18 @@ export default function Directory() {
               {stores.map((store) => (
                 <tr key={store.id}>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {store.number}
+                    {store.group}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {store.name}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {store.group}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {store.address}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {store.staffCount}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {store.region}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm space-x-3">
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <button
                       onClick={() => {
                         setEditingStore(store);
                         setIsModalOpen(true);
                       }}
-                      className="text-indigo-600 hover:text-indigo-900"
+                      className="text-blue-600 hover:text-blue-900 mr-4"
                     >
                       Редактировать
                     </button>
@@ -166,11 +153,11 @@ export default function Directory() {
 
       {isModalOpen && (
         <EditStoreModal
-          store={editingStore || undefined}
+          store={editingStore}
           onSave={handleSaveStore}
           onClose={() => {
-            setEditingStore(null);
             setIsModalOpen(false);
+            setEditingStore(null);
           }}
         />
       )}

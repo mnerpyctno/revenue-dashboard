@@ -14,44 +14,38 @@ datasource db {
 }
 
 model Store {
-  id         String        @id @default(uuid())
-  number     String        @unique
-  name       String
-  address    String
-  group      String
-  staffCount Int
-  region     String?
-  plans      MonthlyPlan[]
-  createdAt  DateTime      @default(now())
-  updatedAt  DateTime      @updatedAt
+  id          String        @id @default(cuid())
+  name        String
+  group       String
+  plans       MonthlyPlan[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
 }
 
 model MonthlyPlan {
-  id             String   @id @default(uuid())
-  storeId        String
-  store          Store    @relation(fields: [storeId], references: [id])
-  month          String // Format: YYYY-MM
-  // Base Plan
-  gsm            Float    @default(0)
-  gadgets        Float    @default(0)
-  digital        Float    @default(0)
-  orders         Float    @default(0)
-  household      Float    @default(0)
-  tech           Float    @default(0)
-  photo          Float    @default(0)
-  sp             Float    @default(0)
-  service        Float    @default(0)
-  smart          Float    @default(0)
-  sim            Float    @default(0)
-  // Additional Plan
-  skill          Float    @default(0)
-  click          Float    @default(0)
-  vp             Float    @default(0)
-  nayavu         Float    @default(0)
-  spice          Float    @default(0)
-  auto           Float    @default(0)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id          String   @id @default(cuid())
+  month       String
+  store       Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  storeId     String
+  gsm         Int      @default(0)
+  gadgets     Int      @default(0)
+  digital     Int      @default(0)
+  orders      Int      @default(0)
+  household   Int      @default(0)
+  tech        Int      @default(0)
+  photo       Int      @default(0)
+  sp          Int      @default(0)
+  service     Int      @default(0)
+  smart       Int      @default(0)
+  sim         Int      @default(0)
+  skill       Int      @default(0)
+  click       Int      @default(0)
+  vp          Int      @default(0)
+  nayavu      Int      @default(0)
+  spice       Int      @default(0)
+  auto        Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   @@unique([storeId, month])
 }

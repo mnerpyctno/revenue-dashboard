@@ -1,9 +1,9 @@
 import { useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { createWorker } from 'tesseract.js';
+import { createWorker, Worker, RecognizeResult } from 'tesseract.js';
 
 interface ImageUploaderProps {
-  onDataExtracted: (data: { text: string; confidence: number }[]) => void;
+  onDataExtracted: (data: { text: string; confidence: number; bbox: { x0: number; y0: number; x1: number; y1: number } }[]) => void;
   className?: string;
 }
 
@@ -18,17 +18,17 @@ export default function ImageUploader({ onDataExtracted, className = '' }: Image
     try {
       const worker = await createWorker('rus+eng');
 
-      worker.setProgressHandler((p) => {
+      await (worker as any).setProgressHandler((p: { progress: number }) => {
         setProgress(Math.round(p.progress * 100));
       });
 
-      const { data } = await worker.recognize(file);
+      const result = await worker.recognize(file);
       
       // Извлекаем текст и уверенность распознавания для каждого блока
-      const extractedData = data.words.map(word => ({
+      const extractedData = result.data.words.map((word: any) => ({
         text: word.text,
         confidence: word.confidence,
-        bbox: word.bbox // Координаты блока текста
+        bbox: word.bbox
       }));
 
       await worker.terminate();

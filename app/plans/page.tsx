@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Store, MonthlyPlan } from '@prisma/client';
 import EditPlanModal from '../components/EditPlanModal';
 import ImageUploader from '../components/ImageUploader';
@@ -25,6 +25,39 @@ export default function Plans() {
   const [editingPlan, setEditingPlan] = useState<MonthlyPlan | null>(null);
   const [isImageUploaderOpen, setIsImageUploaderOpen] = useState(false);
   const [extractedData, setExtractedData] = useState<ExtractedData[] | null>(null);
+  const [plans, setPlans] = useState<MonthlyPlan[]>([]);
+  const [stores, setStores] = useState<Store[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    fetchData();
+  }, [selectedMonth]);
+
+  const fetchData = async () => {
+    try {
+      setIsLoading(true);
+      const [plansRes, storesRes] = await Promise.all([
+        fetch(`/api/plans?month=${selectedMonth}`),
+        fetch('/api/stores')
+      ]);
+
+      if (!plansRes.ok || !storesRes.ok) {
+        throw new Error('Failed to fetch data');
+      }
+
+      const [plansData, storesData] = await Promise.all([
+        plansRes.json(),
+        storesRes.json()
+      ]);
+
+      setPlans(plansData);
+      setStores(storesData);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleDataExtracted = (data: ExtractedData[]) => {
     setExtractedData(data);
@@ -33,14 +66,38 @@ export default function Plans() {
 
   const handleDataConfirmed = async (mappedData: Partial<MonthlyPlan>) => {
     try {
-      // Здесь будет логика сохранения данных
-      console.log('Mapped data:', mappedData);
+      const response = await fetch('/api/plans', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...mappedData,
+          month: selectedMonth,
+          // TODO: Add storeId selection
+          storeId: stores[0]?.id
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to save plan');
+      }
+
+      await fetchData();
       setExtractedData(null);
     } catch (error) {
       console.error('Error saving plan:', error);
       alert('Ошибка при сохранении плана');
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <div className="text-xl text-gray-600">Загрузка...</div>
+      </div>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-gray-100">
@@ -115,28 +172,28 @@ export default function Plans() {
               {plans.map((plan) => {
                 const store = stores.find(s => s.id === plan.storeId);
                 return (
-                  <tr key={plan.id} onDoubleClick={() => handleDoubleClick(plan)}>
+                  <tr key={plan.id} onDoubleClick={() => setEditingPlan(plan)}>
                     <td className="px-3 py-2 whitespace-nowrap text-sm">{store?.group}</td>
                     <td className="px-3 py-2 whitespace-nowrap text-sm">{store?.name}</td>
                     {/* Основные */}
-                    <td className="px-3 py-2 whitespace-nowrap text-sm bg-green-50">{plan.basePlan.gsm}</td>
-                    <td className="px-3 py-2 whitespace-nowrap text-sm bg-green-50">{plan.basePlan.gadgets}</td>
-                    <td className="px-3 py-2 whitespace-nowrap text-sm bg-green-50">{plan.basePlan.digital}</td>
-                    <td className="px-3 py-2 whitespace-nowrap text-sm bg-green-50">{plan.basePlan.orders}</td>
-                    <td className="px-3 py-2 whitespace-nowrap text-sm bg-green-50">{plan.basePlan.household}</td>
-                    <td className="px-3 py-2 whitespace-nowrap text-sm bg-green-50">{plan.basePlan.tech}</td>
-                    <td className="px-3 py-2 whitespace-nowrap text-sm bg-green-50">{plan.basePlan.photo}</td>
-                    <td className="px-3 py-2 whitespace-nowrap text-sm bg-green-50">{plan.basePlan.sp}</td>
-                    <td className="px-3 py-2 whitespace-nowrap text-sm bg-green-50">{plan.basePlan.service}</td>
-                    <td className="px-3 py-2 whitespace-nowrap text-sm bg-green-50">{plan.basePlan.smart}</td>
-                    <td className="px-3 py-2 whitespace-nowrap text-sm bg-green-50">{plan.basePlan.sim}</td>
+                    <td className="px-3 py-2 whitespace-nowrap text-sm bg-green-50">{plan.gsm}</td>
+                    <td className="px-3 py-2 whitespace-nowrap text-sm bg-green-50">{plan.gadgets}</td>
+                    <td className="px-3 py-2 whitespace-nowrap text-sm bg-green-50">{plan.digital}</td>
+                    <td className="px-3 py-2 whitespace-nowrap text-sm bg-green-50">{plan.orders}</td>
+                    <td className="px-3 py-2 whitespace-nowrap text-sm bg-green-50">{plan.household}</td>
+                    <td className="px-3 py-2 whitespace-nowrap text-sm bg-green-50">{plan.tech}</td>
+                    <td className="px-3 py-2 whitespace-nowrap text-sm bg-green-50">{plan.photo}</td>
+                    <td className="px-3 py-2 whitespace-nowrap text-sm bg-green-50">{plan.sp}</td>
+                    <td className="px-3 py-2 whitespace-nowrap text-sm bg-green-50">{plan.service}</td>
+                    <td className="px-3 py-2 whitespace-nowrap text-sm bg-green-50">{plan.smart}</td>
+                    <td className="px-3 py-2 whitespace-nowrap text-sm bg-green-50">{plan.sim}</td>
                     {/* Допы */}
-                    <td className="px-3 py-2 whitespace-nowrap text-sm bg-blue-50">{plan.additionalPlan.skill}</td>
-                    <td className="px-3 py-2 whitespace-nowrap text-sm bg-blue-50">{plan.additionalPlan.click}</td>
-                    <td className="px-3 py-2 whitespace-nowrap text-sm bg-blue-50">{plan.additionalPlan.vp}</td>
-                    <td className="px-3 py-2 whitespace-nowrap text-sm bg-blue-50">{plan.additionalPlan.nayavu}</td>
-                    <td className="px-3 py-2 whitespace-nowrap text-sm bg-blue-50">{plan.additionalPlan.spice}</td>
-                    <td className="px-3 py-2 whitespace-nowrap text-sm bg-blue-50">{plan.additionalPlan.auto}</td>
+                    <td className="px-3 py-2 whitespace-nowrap text-sm bg-blue-50">{plan.skill}</td>
+                    <td className="px-3 py-2 whitespace-nowrap text-sm bg-blue-50">{plan.click}</td>
+                    <td className="px-3 py-2 whitespace-nowrap text-sm bg-blue-50">{plan.vp}</td>
+                    <td className="px-3 py-2 whitespace-nowrap text-sm bg-blue-50">{plan.nayavu}</td>
+                    <td className="px-3 py-2 whitespace-nowrap text-sm bg-blue-50">{plan.spice}</td>
+                    <td className="px-3 py-2 whitespace-nowrap text-sm bg-blue-50">{plan.auto}</td>
                   </tr>
                 );
               })}
@@ -178,9 +235,26 @@ export default function Plans() {
       {isModalOpen && (
         <EditPlanModal
           plan={editingPlan}
-          onSave={(plan) => {
-            // Здесь будет логика сохранения плана
-            setIsModalOpen(false);
+          onSave={async (plan) => {
+            try {
+              const response = await fetch('/api/plans', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(plan),
+              });
+
+              if (!response.ok) {
+                throw new Error('Failed to save plan');
+              }
+
+              await fetchData();
+              setIsModalOpen(false);
+            } catch (error) {
+              console.error('Error saving plan:', error);
+              alert('Ошибка при сохранении плана');
+            }
           }}
           onClose={() => setIsModalOpen(false)}
         />
