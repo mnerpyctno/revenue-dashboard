@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Store } from '@/app/types';
 import EditStoreModal from '../components/EditStoreModal';
 import StoreImageUploader from '../components/StoreImageUploader';
+import BulkStoreUploader from '../components/BulkStoreUploader';
 
 export default function Directory() {
   const [stores, setStores] = useState<Store[]>([]);
@@ -201,14 +202,13 @@ export default function Directory() {
 
       {isUploadModalOpen && (
         <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center">
-          <div className="bg-white rounded-lg p-6 max-w-2xl w-full">
+          <div className="bg-white rounded-lg p-6 max-w-4xl w-full">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold">Загрузка изображения</h2>
+              <h2 className="text-xl font-semibold">Массовое добавление торговых объектов</h2>
               <button
                 onClick={() => {
                   setIsUploadModalOpen(false);
                   setUploadError(null);
-                  setBulkStores([]);
                 }}
                 className="text-gray-400 hover:text-gray-500"
               >
@@ -222,28 +222,11 @@ export default function Directory() {
                 <p className="text-red-600">{uploadError}</p>
               </div>
             )}
-            <StoreImageUploader
+            <BulkStoreUploader
               onDataRecognized={(data) => {
-                if (data.group && data.name) {
-                  setEditingStore(data as Store);
-                  setIsUploadModalOpen(false);
-                  setIsModalOpen(true);
-                } else {
-                  setUploadError('Не удалось распознать все необходимые данные. Пожалуйста, попробуйте еще раз.');
-                  setBulkStores([...bulkStores, data]);
-                }
+                handleBulkSave(data);
               }}
             />
-            {bulkStores.length > 0 && (
-              <div className="mt-4">
-                <button
-                  onClick={() => handleBulkSave(bulkStores)}
-                  className="w-full px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
-                >
-                  Сохранить все торговые объекты
-                </button>
-              </div>
-            )}
           </div>
         </div>
       )}
