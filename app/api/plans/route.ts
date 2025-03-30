@@ -50,23 +50,25 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const month = searchParams.get('month');
-    const storeId = searchParams.get('storeId');
 
-    const where = {
-      ...(month && { month }),
-      ...(storeId && { storeId })
-    };
+    if (!month) {
+      return NextResponse.json(
+        { error: 'Month parameter is required' },
+        { status: 400 }
+      );
+    }
 
     const plans = await prisma.monthlyPlan.findMany({
-      where,
+      where: {
+        month: month,
+      },
       include: {
         store: true
       },
-      orderBy: {
-        store: {
-          number: 'asc'
-        }
-      }
+      orderBy: [
+        { store: { group: 'asc' } },
+        { store: { name: 'asc' } }
+      ]
     });
 
     return NextResponse.json(plans);
