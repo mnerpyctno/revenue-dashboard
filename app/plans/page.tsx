@@ -138,7 +138,7 @@ export default function Plans() {
       }
 
       const savedPlan = await response.json() as MonthlyPlan;
-      if (!savedPlan) {
+      if (!savedPlan || !('id' in savedPlan)) {
         throw new Error('Invalid response from server');
       }
 
