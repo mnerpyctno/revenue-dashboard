@@ -1,22 +1,45 @@
 'use client';
 
 import { useState } from 'react';
-import { Store, MonthlyPlan } from '../types';
+import { Store, MonthlyPlan } from '@prisma/client';
 import EditPlanModal from '../components/EditPlanModal';
+import ImageUploader from '../components/ImageUploader';
+import DataConfirmationModal from '../components/DataConfirmationModal';
+
+interface ExtractedData {
+  text: string;
+  confidence: number;
+  bbox: {
+    x0: number;
+    y0: number;
+    x1: number;
+    y1: number;
+  };
+}
 
 export default function Plans() {
-  const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7));
-  const [plans, setPlans] = useState<MonthlyPlan[]>([]);
-  const [stores, setStores] = useState<Store[]>([]);
+  const [selectedMonth, setSelectedMonth] = useState<string>(
+    new Date().toISOString().slice(0, 7)
+  );
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingPlan, setEditingPlan] = useState<MonthlyPlan | null>(null);
+  const [isImageUploaderOpen, setIsImageUploaderOpen] = useState(false);
+  const [extractedData, setExtractedData] = useState<ExtractedData[] | null>(null);
 
-  const handleDoubleClick = (plan: MonthlyPlan) => {
-    setEditingPlan(plan);
+  const handleDataExtracted = (data: ExtractedData[]) => {
+    setExtractedData(data);
+    setIsImageUploaderOpen(false);
   };
 
-  const handleSavePlan = (updatedPlan: MonthlyPlan) => {
-    setPlans(plans.map(p => p.id === updatedPlan.id ? updatedPlan : p));
-    setEditingPlan(null);
+  const handleDataConfirmed = async (mappedData: Partial<MonthlyPlan>) => {
+    try {
+      // Здесь будет логика сохранения данных
+      console.log('Mapped data:', mappedData);
+      setExtractedData(null);
+    } catch (error) {
+      console.error('Error saving plan:', error);
+      alert('Ошибка при сохранении плана');
+    }
   };
 
   return (
@@ -26,16 +49,25 @@ export default function Plans() {
           <h1 className="text-3xl font-bold text-gray-900">
             Планы продаж
           </h1>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center space-x-4">
             <input
               type="month"
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-md"
+              className="rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
             />
             <button
+              onClick={() => setIsImageUploaderOpen(true)}
+              className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+            >
+              Загрузить из изображения
+            </button>
+            <button
+              onClick={() => {
+                setEditingPlan(null);
+                setIsModalOpen(true);
+              }}
               className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-              onClick={() => {/* Здесь будет создание нового плана */}}
             >
               Создать план
             </button>
@@ -113,11 +145,44 @@ export default function Plans() {
         </div>
       </div>
       
-      {editingPlan && (
+      {isImageUploaderOpen && (
+        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center">
+          <div className="bg-white rounded-lg p-6 max-w-2xl w-full">
+            <h2 className="text-xl font-semibold mb-4">
+              Загрузка плана из изображения
+            </h2>
+            <ImageUploader
+              onDataExtracted={handleDataExtracted}
+              className="h-64"
+            />
+            <div className="flex justify-end mt-4">
+              <button
+                onClick={() => setIsImageUploaderOpen(false)}
+                className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+              >
+                Отмена
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {extractedData && (
+        <DataConfirmationModal
+          data={extractedData}
+          onConfirm={handleDataConfirmed}
+          onClose={() => setExtractedData(null)}
+        />
+      )}
+
+      {isModalOpen && (
         <EditPlanModal
           plan={editingPlan}
-          onSave={handleSavePlan}
-          onClose={() => setEditingPlan(null)}
+          onSave={(plan) => {
+            // Здесь будет логика сохранения плана
+            setIsModalOpen(false);
+          }}
+          onClose={() => setIsModalOpen(false)}
         />
       )}
     </main>

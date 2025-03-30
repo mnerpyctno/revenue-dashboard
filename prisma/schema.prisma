@@ -32,24 +32,24 @@ model MonthlyPlan {
   store          Store    @relation(fields: [storeId], references: [id])
   month          String // Format: YYYY-MM
   // Base Plan
-  gsm            Float
-  gadgets        Float
-  digital        Float
-  orders         Float
-  household      Float
-  tech           Float
-  photo          Float
-  sp             Float
-  service        Float
-  smart          Float
-  sim            Float
+  gsm            Float    @default(0)
+  gadgets        Float    @default(0)
+  digital        Float    @default(0)
+  orders         Float    @default(0)
+  household      Float    @default(0)
+  tech           Float    @default(0)
+  photo          Float    @default(0)
+  sp             Float    @default(0)
+  service        Float    @default(0)
+  smart          Float    @default(0)
+  sim            Float    @default(0)
   // Additional Plan
-  skill          Float
-  click          Float
-  vp             Float
-  nayavu         Float
-  spice          Float
-  auto           Float
+  skill          Float    @default(0)
+  click          Float    @default(0)
+  vp             Float    @default(0)
+  nayavu         Float    @default(0)
+  spice          Float    @default(0)
+  auto           Float    @default(0)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
