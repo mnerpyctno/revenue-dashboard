@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Store } from '@prisma/client';
+import { Store } from '@/app/types';
 import EditStoreModal from '../components/EditStoreModal';
 
 export default function Directory() {

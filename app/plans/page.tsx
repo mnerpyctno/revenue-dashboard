@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Store, MonthlyPlan } from '@prisma/client';
+import { Store, MonthlyPlan } from '@/app/types';
 import EditPlanModal from '../components/EditPlanModal';
 import ImageUploader from '../components/ImageUploader';
 import DataConfirmationModal from '../components/DataConfirmationModal';

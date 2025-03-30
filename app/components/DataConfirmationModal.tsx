@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { MonthlyPlan } from '@prisma/client';
+import { MonthlyPlan } from '@/app/types';
 
 interface ExtractedData {
   text: string;

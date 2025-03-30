@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Store } from '@prisma/client';
+import { Store } from '@/app/types';
 
 interface EditStoreModalProps {
   store: Store | null;
