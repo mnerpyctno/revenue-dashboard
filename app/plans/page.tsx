@@ -42,7 +42,7 @@ const PLAN_FIELDS: PlanFieldKey[] = [
 
 export default function Plans() {
   const [stores, setStores] = useState<Store[]>([]);
-  const [plans, setPlans] = useState<MonthlyPlan[]>([]);
+  const [plans, setPlans] = useState<(MonthlyPlan | null)[]>([]);
   const [selectedMonth, setSelectedMonth] = useState<string>(
     new Date().toISOString().slice(0, 7)
   );
@@ -143,7 +143,7 @@ export default function Plans() {
       }
 
       setPlans(prevPlans => {
-        const existingIndex = prevPlans.findIndex(p => p.id === savedPlan.id);
+        const existingIndex = prevPlans.findIndex(p => p?.id === savedPlan.id);
         if (existingIndex >= 0) {
           const updatedPlans = [...prevPlans];
           updatedPlans[existingIndex] = savedPlan;
@@ -237,31 +237,31 @@ export default function Plans() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {plans.map((plan) => {
-                const store = stores.find(s => s.id === plan.storeId);
+              {plans.map((plan, index) => {
+                const store = stores.find(s => s.id === plan?.storeId);
                 return (
-                  <tr key={plan.id} onDoubleClick={() => setEditingPlan(plan)}>
+                  <tr key={plan?.id} onDoubleClick={() => setEditingPlan(plan)}>
                     <td className="px-3 py-2 whitespace-nowrap text-sm">{store?.group}</td>
                     <td className="px-3 py-2 whitespace-nowrap text-sm">{store?.name}</td>
                     {/* Основные */}
-                    <td className="px-3 py-2 whitespace-nowrap text-sm bg-green-50">{plan.gsm}</td>
-                    <td className="px-3 py-2 whitespace-nowrap text-sm bg-green-50">{plan.gadgets}</td>
-                    <td className="px-3 py-2 whitespace-nowrap text-sm bg-green-50">{plan.digital}</td>
-                    <td className="px-3 py-2 whitespace-nowrap text-sm bg-green-50">{plan.orders}</td>
-                    <td className="px-3 py-2 whitespace-nowrap text-sm bg-green-50">{plan.household}</td>
-                    <td className="px-3 py-2 whitespace-nowrap text-sm bg-green-50">{plan.tech}</td>
-                    <td className="px-3 py-2 whitespace-nowrap text-sm bg-green-50">{plan.photo}</td>
-                    <td className="px-3 py-2 whitespace-nowrap text-sm bg-green-50">{plan.sp}</td>
-                    <td className="px-3 py-2 whitespace-nowrap text-sm bg-green-50">{plan.service}</td>
-                    <td className="px-3 py-2 whitespace-nowrap text-sm bg-green-50">{plan.smart}</td>
-                    <td className="px-3 py-2 whitespace-nowrap text-sm bg-green-50">{plan.sim}</td>
+                    <td className="px-3 py-2 whitespace-nowrap text-sm bg-green-50">{plan?.gsm}</td>
+                    <td className="px-3 py-2 whitespace-nowrap text-sm bg-green-50">{plan?.gadgets}</td>
+                    <td className="px-3 py-2 whitespace-nowrap text-sm bg-green-50">{plan?.digital}</td>
+                    <td className="px-3 py-2 whitespace-nowrap text-sm bg-green-50">{plan?.orders}</td>
+                    <td className="px-3 py-2 whitespace-nowrap text-sm bg-green-50">{plan?.household}</td>
+                    <td className="px-3 py-2 whitespace-nowrap text-sm bg-green-50">{plan?.tech}</td>
+                    <td className="px-3 py-2 whitespace-nowrap text-sm bg-green-50">{plan?.photo}</td>
+                    <td className="px-3 py-2 whitespace-nowrap text-sm bg-green-50">{plan?.sp}</td>
+                    <td className="px-3 py-2 whitespace-nowrap text-sm bg-green-50">{plan?.service}</td>
+                    <td className="px-3 py-2 whitespace-nowrap text-sm bg-green-50">{plan?.smart}</td>
+                    <td className="px-3 py-2 whitespace-nowrap text-sm bg-green-50">{plan?.sim}</td>
                     {/* Допы */}
-                    <td className="px-3 py-2 whitespace-nowrap text-sm bg-blue-50">{plan.skill}</td>
-                    <td className="px-3 py-2 whitespace-nowrap text-sm bg-blue-50">{plan.click}</td>
-                    <td className="px-3 py-2 whitespace-nowrap text-sm bg-blue-50">{plan.vp}</td>
-                    <td className="px-3 py-2 whitespace-nowrap text-sm bg-blue-50">{plan.nayavu}</td>
-                    <td className="px-3 py-2 whitespace-nowrap text-sm bg-blue-50">{plan.spice}</td>
-                    <td className="px-3 py-2 whitespace-nowrap text-sm bg-blue-50">{plan.auto}</td>
+                    <td className="px-3 py-2 whitespace-nowrap text-sm bg-blue-50">{plan?.skill}</td>
+                    <td className="px-3 py-2 whitespace-nowrap text-sm bg-blue-50">{plan?.click}</td>
+                    <td className="px-3 py-2 whitespace-nowrap text-sm bg-blue-50">{plan?.vp}</td>
+                    <td className="px-3 py-2 whitespace-nowrap text-sm bg-blue-50">{plan?.nayavu}</td>
+                    <td className="px-3 py-2 whitespace-nowrap text-sm bg-blue-50">{plan?.spice}</td>
+                    <td className="px-3 py-2 whitespace-nowrap text-sm bg-blue-50">{plan?.auto}</td>
                   </tr>
                 );
               })}
