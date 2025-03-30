@@ -1,11 +1,14 @@
-import { createClient } from '@vercel/edge-config';
+import { Redis } from '@upstash/redis';
 import { Store, MonthlyPlan } from '@/app/types';
 
-const config = createClient('ecfg_o8dm6hmlirvdv1m4rntlwbrwwrwn');
+const redis = new Redis({
+  url: process.env.REDIS_URL || '',
+  token: process.env.KV_REST_API_TOKEN || '',
+});
 
 export async function getStores(): Promise<Store[]> {
   try {
-    const stores = await config.get<Store[]>('stores');
+    const stores = await redis.get<Store[]>('stores');
     return stores || [];
   } catch (error) {
     console.error('Error fetching stores:', error);
@@ -15,7 +18,7 @@ export async function getStores(): Promise<Store[]> {
 
 export async function getPlans(month: string): Promise<MonthlyPlan[]> {
   try {
-    const plans = await config.get<MonthlyPlan[]>(`plans_${month}`);
+    const plans = await redis.get<MonthlyPlan[]>(`plans_${month}`);
     return plans || [];
   } catch (error) {
     console.error('Error fetching plans:', error);
@@ -41,9 +44,7 @@ export async function savePlan(plan: Omit<MonthlyPlan, 'id'>): Promise<MonthlyPl
       updatedPlans = [...plans, newPlan];
     }
 
-    await config.update({
-      [`plans_${month}`]: updatedPlans
-    });
+    await redis.set(`plans_${month}`, updatedPlans);
     return existingIndex >= 0 ? (plan as MonthlyPlan) : updatedPlans[updatedPlans.length - 1];
   } catch (error) {
     console.error('Error saving plan:', error);
@@ -54,9 +55,7 @@ export async function savePlan(plan: Omit<MonthlyPlan, 'id'>): Promise<MonthlyPl
 export async function saveStore(storeOrStores: Omit<Store, 'id'> | { stores: Store[] }): Promise<Store | void> {
   try {
     if ('stores' in storeOrStores) {
-      await config.update({
-        stores: storeOrStores.stores
-      });
+      await redis.set('stores', storeOrStores.stores);
       return;
     }
 
@@ -75,9 +74,7 @@ export async function saveStore(storeOrStores: Omit<Store, 'id'> | { stores: Sto
       updatedStores = [...stores, newStore];
     }
 
-    await config.update({
-      stores: updatedStores
-    });
+    await redis.set('stores', updatedStores);
     return existingIndex >= 0 ? (storeOrStores as Store) : updatedStores[updatedStores.length - 1];
   } catch (error) {
     console.error('Error saving store:', error);
