@@ -119,7 +119,7 @@ export default function Plans() {
       if (!isNaN(numericValue)) {
         const key = field as PlanFieldKey;
         if (PLAN_FIELDS.includes(key)) {
-          planData[key] = numericValue;
+          (planData[key] as number) = numericValue;
         }
       }
     });
@@ -137,7 +137,7 @@ export default function Plans() {
         throw new Error('Failed to save plan');
       }
 
-      const savedPlan = await response.json();
+      const savedPlan = await response.json() as MonthlyPlan;
       if (!savedPlan) {
         throw new Error('Invalid response from server');
       }
