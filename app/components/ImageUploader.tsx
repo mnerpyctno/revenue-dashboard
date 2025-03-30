@@ -1,111 +1,124 @@
-import { useState } from 'react';
-import { createWorker, Worker, RecognizeResult } from 'tesseract.js';
+'use client';
 
-interface ExtractedData {
-  text: string;
-  confidence: number;
-  bbox: {
-    x0: number;
-    y0: number;
-    x1: number;
-    y1: number;
-  };
+import { useState, useCallback } from 'react';
+import { useDropzone } from 'react-dropzone';
+import { createWorker } from 'tesseract.js';
+import { MonthlyPlan } from '@/app/types';
+
+interface RecognizedData {
+  [key: string]: string;
 }
 
 interface ImageUploaderProps {
-  onDataExtracted: (data: ExtractedData[]) => void;
-  className?: string;
+  onDataRecognized: (data: Partial<MonthlyPlan>) => void;
 }
 
-export default function ImageUploader({ onDataExtracted, className = '' }: ImageUploaderProps) {
+export default function ImageUploader({ onDataRecognized }: ImageUploaderProps) {
   const [isProcessing, setIsProcessing] = useState(false);
-  const [progress, setProgress] = useState(0);
+  const [recognizedData, setRecognizedData] = useState<RecognizedData | null>(null);
 
-  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
+  const processImage = async (file: File) => {
     setIsProcessing(true);
-    setProgress(0);
-
     try {
-      const worker = await createWorker('rus') as Worker & { setProgressHandler: (handler: (progress: { progress: number }) => void) => void };
+      const worker = await createWorker('rus');
+      const { data: { text } } = await worker.recognize(file);
+      await worker.terminate();
 
-      // Обработчик прогресса
-      worker.setProgressHandler((progress) => {
-        setProgress(progress.progress * 100);
+      // Парсим распознанный текст
+      const lines = text.split('\n').filter(line => line.trim());
+      const data: RecognizedData = {};
+      
+      lines.forEach(line => {
+        const [key, value] = line.split(':').map(part => part.trim());
+        if (key && value) {
+          data[key.toLowerCase()] = value;
+        }
       });
 
-      // Распознавание текста
-      const result = await worker.recognize(file) as RecognizeResult;
-      const words = (result.data as any).words as Array<{
-        text: string;
-        confidence: number;
-        bbox: { x0: number; y0: number; x1: number; y1: number };
-      }>;
+      setRecognizedData(data);
 
-      // Извлекаем текст и уверенность распознавания для каждого блока
-      const extractedData = words.map((word) => ({
-        text: word.text,
-        confidence: word.confidence,
-        bbox: word.bbox
-      }));
+      // Преобразуем распознанные данные в формат MonthlyPlan
+      const planData: Partial<MonthlyPlan> = {
+        gsm: parseFloat(data['gsm']) || 0,
+        gadgets: parseFloat(data['gadgets']) || 0,
+        digital: parseFloat(data['digital']) || 0,
+        orders: parseFloat(data['orders']) || 0,
+        household: parseFloat(data['household']) || 0,
+        tech: parseFloat(data['tech']) || 0,
+        photo: parseFloat(data['photo']) || 0,
+        sp: parseFloat(data['sp']) || 0,
+        service: parseFloat(data['service']) || 0,
+        smart: parseFloat(data['smart']) || 0,
+        sim: parseFloat(data['sim']) || 0,
+        skill: parseFloat(data['skill']) || 0,
+        click: parseFloat(data['click']) || 0,
+        vp: parseFloat(data['vp']) || 0,
+        nayavu: parseFloat(data['nayavu']) || 0,
+        spice: parseFloat(data['spice']) || 0,
+        auto: parseFloat(data['auto']) || 0
+      };
 
-      onDataExtracted(extractedData);
-      await worker.terminate();
+      onDataRecognized(planData);
     } catch (error) {
-      console.error('Error processing image:', error);
+      console.error('Ошибка при распознавании:', error);
     } finally {
       setIsProcessing(false);
-      setProgress(0);
     }
   };
 
+  const onDrop = useCallback((acceptedFiles: File[]) => {
+    if (acceptedFiles.length > 0) {
+      processImage(acceptedFiles[0]);
+    }
+  }, []);
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: {
+      'image/*': ['.png', '.jpg', '.jpeg']
+    },
+    maxFiles: 1
+  });
+
   return (
-    <div className={`space-y-4 ${className}`}>
-      <div className="flex items-center justify-center w-full">
-        <label
-          htmlFor="image-upload"
-          className="flex flex-col items-center justify-center w-full h-64 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100"
-        >
-          <div className="flex flex-col items-center justify-center pt-5 pb-6">
-            <svg
-              className="w-8 h-8 mb-2 text-gray-400"
-              aria-hidden="true"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 20 16"
-            >
-              <path
-                stroke="currentColor"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"
-              />
+    <div className="space-y-4">
+      <div
+        {...getRootProps()}
+        className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer
+          ${isDragActive ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-blue-500'}`}
+      >
+        <input {...getInputProps()} />
+        {isProcessing ? (
+          <div className="text-gray-600">
+            <svg className="animate-spin h-6 w-6 mx-auto mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
-            <p className="mb-1 text-sm text-gray-500">
-              <span className="font-semibold">Нажмите для загрузки</span> или перетащите
-            </p>
-            <p className="text-xs text-gray-500">PNG, JPG или JPEG (МАКС. 800x400px)</p>
+            Распознавание...
           </div>
-          <input
-            id="image-upload"
-            type="file"
-            className="hidden"
-            accept="image/*"
-            onChange={handleImageUpload}
-            disabled={isProcessing}
-          />
-        </label>
+        ) : isDragActive ? (
+          <p className="text-blue-500">Перетащите файл сюда...</p>
+        ) : (
+          <div>
+            <svg className="mx-auto h-12 w-12 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3 3m0 0l-3-3m3 3V8" />
+            </svg>
+            <p className="text-gray-600">Перетащите изображение или кликните для выбора</p>
+          </div>
+        )}
       </div>
 
-      {isProcessing && (
-        <div className="w-full bg-gray-200 rounded-full h-2.5">
-          <div
-            className="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
-            style={{ width: `${progress}%` }}
-          />
+      {recognizedData && (
+        <div className="bg-white rounded-lg shadow p-4">
+          <h3 className="text-lg font-medium mb-3">Распознанные данные:</h3>
+          <div className="grid grid-cols-2 gap-4">
+            {Object.entries(recognizedData).map(([key, value]) => (
+              <div key={key} className="flex justify-between border-b pb-2">
+                <span className="font-medium capitalize">{key}:</span>
+                <span>{value}</span>
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </div>
