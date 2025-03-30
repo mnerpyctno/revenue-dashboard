@@ -4,12 +4,14 @@ import { useState } from 'react';
 import { MonthlyPlan } from '../types';
 
 interface EditPlanModalProps {
-  plan: MonthlyPlan;
+  plan: MonthlyPlan | null;
   onSave: (plan: MonthlyPlan) => void;
   onClose: () => void;
 }
 
 export default function EditPlanModal({ plan, onSave, onClose }: EditPlanModalProps) {
+  if (!plan) return null;
+  
   const [editedPlan, setEditedPlan] = useState<MonthlyPlan>({ ...plan });
 
   const handleSave = () => {
