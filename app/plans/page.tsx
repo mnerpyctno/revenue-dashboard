@@ -18,25 +18,10 @@ interface ExtractedData {
 }
 
 type PlanFields = {
+  [K in keyof MonthlyPlan]: MonthlyPlan[K];
+} & {
   storeId: string;
   month: string;
-  gsm: number;
-  gadgets: number;
-  digital: number;
-  orders: number;
-  household: number;
-  tech: number;
-  photo: number;
-  sp: number;
-  service: number;
-  smart: number;
-  sim: number;
-  skill: number;
-  click: number;
-  vp: number;
-  nayavu: number;
-  spice: number;
-  auto: number;
 };
 
 type PlanFieldKey = keyof PlanFields;
@@ -112,26 +97,9 @@ export default function Plans() {
   const handleDataConfirmed = async (mappings: Record<string, string>) => {
     if (!selectedStore || !selectedMonth) return;
 
-    const planData: PlanFields = {
+    const planData: Partial<PlanFields> = {
       storeId: selectedStore,
       month: selectedMonth,
-      gsm: 0,
-      gadgets: 0,
-      digital: 0,
-      orders: 0,
-      household: 0,
-      tech: 0,
-      photo: 0,
-      sp: 0,
-      service: 0,
-      smart: 0,
-      sim: 0,
-      skill: 0,
-      click: 0,
-      vp: 0,
-      nayavu: 0,
-      spice: 0,
-      auto: 0,
     };
 
     // Преобразуем строковые значения в числа
