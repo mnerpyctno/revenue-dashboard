@@ -9,7 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@tesseractjs/tesseract": "^4.1.1",
+    "tesseract.js": "^6.0.0",
     "@vercel/edge-config": "^1.0.0",
     "next": "14.1.0",
     "react": "^18",
