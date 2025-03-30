@@ -11,6 +11,7 @@ export default function Directory() {
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [editingStore, setEditingStore] = useState<Store | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchStores();
@@ -181,7 +182,10 @@ export default function Directory() {
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-semibold">Загрузка изображения</h2>
               <button
-                onClick={() => setIsUploadModalOpen(false)}
+                onClick={() => {
+                  setIsUploadModalOpen(false);
+                  setUploadError(null);
+                }}
                 className="text-gray-400 hover:text-gray-500"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -189,11 +193,20 @@ export default function Directory() {
                 </svg>
               </button>
             </div>
+            {uploadError && (
+              <div className="mb-4 bg-red-50 border border-red-200 rounded-lg p-4">
+                <p className="text-red-600">{uploadError}</p>
+              </div>
+            )}
             <StoreImageUploader
               onDataRecognized={(data) => {
-                setEditingStore(data as Store);
-                setIsUploadModalOpen(false);
-                setIsModalOpen(true);
+                if (data.group && data.name) {
+                  setEditingStore(data as Store);
+                  setIsUploadModalOpen(false);
+                  setIsModalOpen(true);
+                } else {
+                  setUploadError('Не удалось распознать все необходимые данные. Пожалуйста, попробуйте еще раз.');
+                }
               }}
             />
           </div>
