@@ -335,6 +335,11 @@ export default function Plans() {
                 throw new Error('Failed to save plan');
               }
 
+              const savedPlan = await response.json() as MonthlyPlan;
+              if (!savedPlan || !('id' in savedPlan)) {
+                throw new Error('Invalid response from server');
+              }
+
               await fetchData();
               setIsModalOpen(false);
             } catch (error) {
