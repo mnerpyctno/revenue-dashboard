@@ -12,6 +12,7 @@ export default function Directory() {
   const [editingStore, setEditingStore] = useState<Store | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [bulkStores, setBulkStores] = useState<Partial<Store>[]>([]);
 
   useEffect(() => {
     fetchStores();
@@ -56,6 +57,28 @@ export default function Directory() {
     } catch (error) {
       console.error('Error saving store:', error);
       alert('Ошибка при сохранении ТО');
+    }
+  };
+
+  const handleBulkSave = async (stores: Partial<Store>[]) => {
+    try {
+      const promises = stores.map(store => 
+        fetch('/api/stores', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(store),
+        })
+      );
+
+      await Promise.all(promises);
+      await fetchStores();
+      setIsUploadModalOpen(false);
+      setBulkStores([]);
+    } catch (error) {
+      console.error('Error saving stores:', error);
+      alert('Ошибка при сохранении торговых объектов');
     }
   };
 
@@ -185,6 +208,7 @@ export default function Directory() {
                 onClick={() => {
                   setIsUploadModalOpen(false);
                   setUploadError(null);
+                  setBulkStores([]);
                 }}
                 className="text-gray-400 hover:text-gray-500"
               >
@@ -206,9 +230,20 @@ export default function Directory() {
                   setIsModalOpen(true);
                 } else {
                   setUploadError('Не удалось распознать все необходимые данные. Пожалуйста, попробуйте еще раз.');
+                  setBulkStores([...bulkStores, data]);
                 }
               }}
             />
+            {bulkStores.length > 0 && (
+              <div className="mt-4">
+                <button
+                  onClick={() => handleBulkSave(bulkStores)}
+                  className="w-full px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+                >
+                  Сохранить все торговые объекты
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}

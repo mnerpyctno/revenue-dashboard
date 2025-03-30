@@ -14,10 +14,17 @@ interface StoreImageUploaderProps {
   onDataRecognized: (data: Partial<Store>) => void;
 }
 
+interface BulkStore {
+  group: string;
+  name: string;
+}
+
 export default function StoreImageUploader({ onDataRecognized }: StoreImageUploaderProps) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [recognizedData, setRecognizedData] = useState<RecognizedData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [bulkStores, setBulkStores] = useState<BulkStore[]>([]);
+  const [showBulkForm, setShowBulkForm] = useState(false);
 
   const processImage = async (file: File) => {
     setIsProcessing(true);
@@ -50,6 +57,7 @@ export default function StoreImageUploader({ onDataRecognized }: StoreImageUploa
       // Проверяем, удалось ли распознать необходимые данные
       if (!data.group || !data.name) {
         setError('Не удалось распознать все необходимые данные. Пожалуйста, проверьте качество изображения.');
+        setShowBulkForm(true);
       }
 
       setRecognizedData(data);
@@ -64,9 +72,45 @@ export default function StoreImageUploader({ onDataRecognized }: StoreImageUploa
     } catch (error) {
       console.error('Ошибка при распознавании:', error);
       setError('Произошла ошибка при распознавании изображения. Пожалуйста, попробуйте еще раз.');
+      setShowBulkForm(true);
     } finally {
       setIsProcessing(false);
     }
+  };
+
+  const handleAddBulkStore = () => {
+    const newStore: BulkStore = { group: '', name: '' };
+    setBulkStores([...bulkStores, newStore]);
+  };
+
+  const handleUpdateBulkStore = (index: number, field: keyof BulkStore, value: string) => {
+    const updatedStores = [...bulkStores];
+    updatedStores[index] = { ...updatedStores[index], [field]: value };
+    setBulkStores(updatedStores);
+  };
+
+  const handleRemoveBulkStore = (index: number) => {
+    const updatedStores = bulkStores.filter((_, i) => i !== index);
+    setBulkStores(updatedStores);
+  };
+
+  const handleSubmitBulkStores = () => {
+    // Проверяем, что все поля заполнены
+    const hasEmptyFields = bulkStores.some(store => !store.group || !store.name);
+    if (hasEmptyFields) {
+      setError('Пожалуйста, заполните все поля');
+      return;
+    }
+
+    // Отправляем каждый торговый объект
+    bulkStores.forEach(store => {
+      onDataRecognized(store);
+    });
+
+    // Очищаем форму
+    setBulkStores([]);
+    setShowBulkForm(false);
+    setError(null);
   };
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
@@ -128,6 +172,61 @@ export default function StoreImageUploader({ onDataRecognized }: StoreImageUploa
             <div className="flex justify-between border-b pb-2">
               <span className="font-medium">Название:</span>
               <span>{recognizedData.name || 'Не распознано'}</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showBulkForm && (
+        <div className="bg-white rounded-lg shadow p-4">
+          <h3 className="text-lg font-medium mb-4">Массовое добавление торговых объектов</h3>
+          <div className="space-y-4">
+            {bulkStores.map((store, index) => (
+              <div key={index} className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg">
+                <div className="flex-1">
+                  <input
+                    type="text"
+                    placeholder="Группа"
+                    value={store.group}
+                    onChange={(e) => handleUpdateBulkStore(index, 'group', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                <div className="flex-1">
+                  <input
+                    type="text"
+                    placeholder="Название"
+                    value={store.name}
+                    onChange={(e) => handleUpdateBulkStore(index, 'name', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                <button
+                  onClick={() => handleRemoveBulkStore(index)}
+                  className="p-2 text-red-600 hover:text-red-800"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </button>
+              </div>
+            ))}
+            <div className="flex justify-between">
+              <button
+                onClick={handleAddBulkStore}
+                className="px-4 py-2 text-blue-600 hover:text-blue-800 flex items-center"
+              >
+                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                Добавить еще
+              </button>
+              <button
+                onClick={handleSubmitBulkStores}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+              >
+                Сохранить все
+              </button>
             </div>
           </div>
         </div>
