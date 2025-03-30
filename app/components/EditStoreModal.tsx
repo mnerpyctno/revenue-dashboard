@@ -7,11 +7,14 @@ interface EditStoreModalProps {
   onClose: () => void;
 }
 
+const STORE_GROUPS = ['VIP', 'A', 'B', 'C'] as const;
+type StoreGroup = typeof STORE_GROUPS[number];
+
 export default function EditStoreModal({ store, onSave, onClose }: EditStoreModalProps) {
   const [formData, setFormData] = useState<Omit<Store, 'id'>>({
     number: '',
     address: '',
-    group: '',
+    group: 'A',
     staffCount: 0,
     name: '',
     region: ''
@@ -22,6 +25,18 @@ export default function EditStoreModal({ store, onSave, onClose }: EditStoreModa
       setFormData(store);
     }
   }, [store]);
+
+  // Автоматическое формирование названия при изменении номера, региона или адреса
+  useEffect(() => {
+    const { number, region, address } = formData;
+    if (number && address) {
+      const parts = [number];
+      if (region) parts.push(region);
+      parts.push(address);
+      const generatedName = parts.join(' ');
+      setFormData(prev => ({ ...prev, name: generatedName }));
+    }
+  }, [formData.number, formData.region, formData.address]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,13 +78,18 @@ export default function EditStoreModal({ store, onSave, onClose }: EditStoreModa
 
           <div>
             <label className="block text-sm font-medium text-gray-700">Группа</label>
-            <input
-              type="text"
+            <select
               value={formData.group}
               onChange={(e) => setFormData({ ...formData, group: e.target.value })}
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
               required
-            />
+            >
+              {STORE_GROUPS.map((group) => (
+                <option key={group} value={group}>
+                  {group}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div>
@@ -85,17 +105,6 @@ export default function EditStoreModal({ store, onSave, onClose }: EditStoreModa
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">Название ТО</label>
-            <input
-              type="text"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              required
-            />
-          </div>
-
-          <div>
             <label className="block text-sm font-medium text-gray-700">Регион</label>
             <input
               type="text"
@@ -103,6 +112,20 @@ export default function EditStoreModal({ store, onSave, onClose }: EditStoreModa
               onChange={(e) => setFormData({ ...formData, region: e.target.value })}
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
             />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Название ТО</label>
+            <input
+              type="text"
+              value={formData.name}
+              readOnly
+              className="mt-1 block w-full rounded-md border-gray-300 bg-gray-50 shadow-sm"
+              required
+            />
+            <p className="mt-1 text-sm text-gray-500">
+              Формируется автоматически: Номер + Регион + Адрес
+            </p>
           </div>
 
           <div className="flex justify-end space-x-3 mt-6">
