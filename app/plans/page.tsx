@@ -43,7 +43,7 @@ const PLAN_FIELDS: PlanFieldKey[] = [
 
 export default function Plans() {
   const [stores, setStores] = useState<Store[]>([]);
-  const [plans, setPlans] = useState<(MonthlyPlan | null)[]>([]);
+  const [plans, setPlans] = useState<MonthlyPlan[]>([]);
   const [selectedMonth, setSelectedMonth] = useState<string>(
     new Date().toISOString().slice(0, 7)
   );
@@ -76,7 +76,7 @@ export default function Plans() {
       ]);
 
       setStores(storesData);
-      setPlans(plansData);
+      setPlans(plansData.filter((plan: MonthlyPlan | null): plan is MonthlyPlan => plan !== null));
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
