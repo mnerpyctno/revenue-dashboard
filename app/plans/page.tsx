@@ -84,9 +84,52 @@ export default function Plans() {
     }
   };
 
-  const handleDataExtracted = (data: ExtractedData[]) => {
-    setExtractedData(data);
-    setIsImageUploaderOpen(false);
+  const savePlan = async (plan: MonthlyPlan) => {
+    try {
+      const response = await fetch('/api/plans', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(plan),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to save plan');
+      }
+    } catch (error) {
+      console.error('Error saving plan:', error);
+    }
+  };
+
+  const handleDataExtracted = (data: Partial<MonthlyPlan>) => {
+    const newPlan: MonthlyPlan = {
+      id: crypto.randomUUID(),
+      storeId: selectedStore,
+      month: selectedMonth,
+      gsm: data.gsm || 0,
+      gadgets: data.gadgets || 0,
+      digital: data.digital || 0,
+      orders: data.orders || 0,
+      household: data.household || 0,
+      tech: data.tech || 0,
+      photo: data.photo || 0,
+      sp: data.sp || 0,
+      service: data.service || 0,
+      smart: data.smart || 0,
+      sim: data.sim || 0,
+      skill: data.skill || 0,
+      click: data.click || 0,
+      vp: data.vp || 0,
+      nayavu: data.nayavu || 0,
+      spice: data.spice || 0,
+      auto: data.auto || 0,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
+    setPlans(prevPlans => [...prevPlans, newPlan]);
+    savePlan(newPlan);
   };
 
   const handleDataConfirmed = async (mappings: Record<string, string>) => {
@@ -275,8 +318,10 @@ export default function Plans() {
               Загрузка плана из изображения
             </h2>
             <ImageUploader
-              onDataExtracted={handleDataExtracted}
-              className="h-64"
+              onDataRecognized={(data) => {
+                handleDataExtracted(data);
+                setIsImageUploaderOpen(false);
+              }}
             />
             <div className="flex justify-end mt-4">
               <button

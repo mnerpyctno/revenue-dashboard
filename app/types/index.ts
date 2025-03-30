@@ -48,4 +48,6 @@ export interface MonthlyPlan {
   nayavu: number;
   spice: number;
   auto: number;
+  createdAt: string;
+  updatedAt: string;
 } 
